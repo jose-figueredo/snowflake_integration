@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake GitHub Integration Guide</title>
+
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    margin:0;
+    background:#f5f7fa;
+    color:#333;
+    line-height:1.7;
+}
+header{
+    background:#24292e;
+    color:white;
+    padding:50px 20px;
+    text-align:center;
+}
+header h1{
+    margin:0;
+    font-size:42px;
+}
+header p{
+    max-width:900px;
+    margin:auto;
+    opacity:.9;
+}
+nav{
+    background:#0366d6;
+    padding:15px;
+    position:sticky;
+    top:0;
+}
+nav a{
+    color:white;
+    text-decoration:none;
+    margin-right:20px;
+    font-weight:bold;
+}
+.container{
+    width:90%;
+    max-width:1100px;
+    margin:auto;
+    padding:30px 0;
+}
+section{
+    background:white;
+    margin-bottom:25px;
+    padding:30px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+h2{
+    color:#0366d6;
+}
+code{
+    background:#f4f4f4;
+    padding:2px 6px;
+    border-radius:4px;
+}
+pre{
+    background:#1e1e1e;
+    color:#fff;
+    padding:15px;
+    overflow:auto;
+    border-radius:8px;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+table th,table td{
+    border:1px solid #ddd;
+    padding:12px;
+}
+table th{
+    background:#0366d6;
+    color:white;
+}
+footer{
+    background:#24292e;
+    color:white;
+    text-align:center;
+    padding:25px;
+}
+ul li{
+    margin-bottom:8px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>Snowflake GitHub Integration</h1>
+<p>
+Complete guide for integrating GitHub repositories with Snowflake to automate SQL deployments,
+manage version-controlled database objects, execute remote scripts, and enable CI/CD workflows.
+</p>
+</header>
+
+<nav>
+<a href="#overview">Overview</a>
+<a href="#architecture">Architecture</a>
+<a href="#setup">Setup</a>
+<a href="#objects">Objects</a>
+<a href="#commands">SQL</a>
+<a href="#permissions">RBAC</a>
+<a href="#automation">Automation</a>
+<a href="#limitations">Limitations</a>
+</nav>
+
+<div class="container">
+
+<section id="overview">
+<h2>Overview</h2>
+
+<p>
+Snowflake GitHub Integration allows SQL scripts, Python files, and other project assets stored in GitHub repositories
+to be accessed directly inside Snowflake.
+</p>
+
+<p>
+This enables:
+</p>
+
+<ul>
+<li>Version-controlled database development</li>
+<li>CI/CD for Snowflake projects</li>
+<li>Automated deployment of SQL objects</li>
+<li>Running SQL directly from GitHub</li>
+<li>Using GitHub-hosted Python code in Snowpark stored procedures</li>
+<li>Synchronizing Snowflake with GitHub branches and commits</li>
+</ul>
+
+</section>
+
+<section id="architecture">
+
+<h2>Integration Architecture</h2>
+
+<pre>
+GitHub Repository
+        │
+        │ Personal Access Token
+        ▼
+Secret Object (Private Repositories)
+        │
+        ▼
+API Integration
+        │
+        ▼
+Git Repository Object
+        │
+        ▼
+Repository Stage
+        │
+        ├── Execute SQL Files
+        ├── Browse Branches
+        ├── Browse Tags
+        ├── Browse Commits
+        └── Import Python Files
+</pre>
+
+</section>
+
+<section id="setup">
+
+<h2>Step 1 - GitHub Setup</h2>
+
+<ol>
+
+<li>Create a GitHub repository (Public or Private).</li>
+
+<li>Create a Personal Access Token.</li>
+
+<li>Grant repository permissions.</li>
+
+<li>Copy and securely store the token.</li>
+
+</ol>
+
+<p>
+For private repositories, the Personal Access Token is required for authentication.
+</p>
+
+</section>
+
+<section id="objects">
+
+<h2>Snowflake Objects</h2>
+
+<table>
+
+<tr>
+<th>Object</th>
+<th>Purpose</th>
+</tr>
+
+<tr>
+<td>Secret</td>
+<td>Stores GitHub credentials (Private repositories only)</td>
+</tr>
+
+<tr>
+<td>API Integration</td>
+<td>Connects Snowflake with GitHub</td>
+</tr>
+
+<tr>
+<td>Git Repository</td>
+<td>Represents the GitHub repository inside Snowflake</td>
+</tr>
+
+<tr>
+<td>Repository Stage</td>
+<td>Internal stage used to browse repository contents</td>
+</tr>
+
+</table>
+
+</section>
+
+<section>
+
+<h2>Private Repository Workflow</h2>
+
+<ol>
+
+<li>Create Secret Object</li>
+
+<li>Create API Integration</li>
+
+<li>Create Git Repository Object</li>
+
+<li>Browse repository files</li>
+
+<li>Synchronize using FETCH</li>
+
+<li>Execute SQL directly from repository</li>
+
+</ol>
+
+</section>
+
+<section>
+
+<h2>Public Repository Workflow</h2>
+
+<p>
+Public repositories do not require a Secret object.
+Only an API Integration and Git Repository object are required.
+</p>
+
+</section>
+
+<section id="commands">
+
+<h2>Useful SQL Commands</h2>
+
+<table>
+
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+
+<tr>
+<td><code>SHOW GIT REPOSITORIES</code></td>
+<td>List configured repositories</td>
+</tr>
+
+<tr>
+<td><code>DESCRIBE GIT REPOSITORY</code></td>
+<td>Repository details</td>
+</tr>
+
+<tr>
+<td><code>SHOW GIT BRANCHES</code></td>
+<td>View repository branches</td>
+</tr>
+
+<tr>
+<td><code>LIST @repository/branch</code></td>
+<td>List repository files</td>
+</tr>
+
+<tr>
+<td><code>ALTER GIT REPOSITORY FETCH</code></td>
+<td>Synchronize repository</td>
+</tr>
+
+<tr>
+<td><code>DROP GIT REPOSITORY</code></td>
+<td>Delete repository object</td>
+</tr>
+
+</table>
+
+</section>
+
+<section>
+
+<h2>Repository Features</h2>
+
+<ul>
+
+<li>Main branch support</li>
+
+<li>Feature branch support</li>
+
+<li>Tag browsing</li>
+
+<li>Commit browsing</li>
+
+<li>Repository synchronization</li>
+
+<li>Download repository files</li>
+
+<li>View repository metadata</li>
+
+</ul>
+
+</section>
+
+<section id="permissions">
+
+<h2>RBAC Permissions</h2>
+
+<table>
+
+<tr>
+<th>Permission</th>
+<th>Purpose</th>
+</tr>
+
+<tr>
+<td>READ</td>
+<td>View repository contents</td>
+</tr>
+
+<tr>
+<td>WRITE</td>
+<td>Run repository synchronization (FETCH)</td>
+</tr>
+
+<tr>
+<td>USAGE (Database)</td>
+<td>Access database</td>
+</tr>
+
+<tr>
+<td>USAGE (Schema)</td>
+<td>Access schema</td>
+</tr>
+
+</table>
+
+<p>
+Important:
+</p>
+
+<ul>
+
+<li>WRITE requires READ permission.</li>
+
+<li>Database and Schema USAGE privileges are also required.</li>
+
+<li>WRITE does not allow modifying GitHub files.</li>
+
+</ul>
+
+</section>
+
+<section>
+
+<h2>Repository Stage vs Internal Stage</h2>
+
+<table>
+
+<tr>
+<th>Repository Stage</th>
+<th>Internal Stage</th>
+</tr>
+
+<tr>
+<td>Automatically synchronized with GitHub</td>
+<td>Manual uploads</td>
+</tr>
+
+<tr>
+<td>Read-only</td>
+<td>Read/Write</td>
+</tr>
+
+<tr>
+<td>Version controlled</td>
+<td>No version control</td>
+</tr>
+
+<tr>
+<td>Supports branches and tags</td>
+<td>No Git support</td>
+</tr>
+
+</table>
+
+</section>
+
+<section id="automation">
+
+<h2>Executing SQL from GitHub</h2>
+
+<p>
+Snowflake can execute SQL files directly from the repository stage using:
+</p>
+
+<pre>
+EXECUTE IMMEDIATE FROM
+@repository/branches/main/sql/create_tables.sql;
+</pre>
+
+<p>
+Always synchronize the repository first using FETCH to retrieve the latest changes.
+</p>
+
+</section>
+
+<section>
+
+<h2>Snowpark Integration</h2>
+
+<p>
+GitHub-hosted Python files can be imported into Snowflake Stored Procedures.
+</p>
+
+<p>
+Benefits:
+</p>
+
+<ul>
+
+<li>Version-controlled Python code</li>
+
+<li>Cleaner stored procedures</li>
+
+<li>Reusable business logic</li>
+
+<li>Snowpark support</li>
+
+</ul>
+
+</section>
+
+<section>
+
+<h2>Synchronization</h2>
+
+<p>
+Repository synchronization updates the Snowflake repository stage with the latest commits from GitHub.
+</p>
+
+<p>
+Synchronization is performed using:
+</p>
+
+<pre>
+ALTER GIT REPOSITORY repository_name FETCH;
+</pre>
+
+<p>
+This refreshes:
+</p>
+
+<ul>
+
+<li>Branches</li>
+
+<li>Tags</li>
+
+<li>Commits</li>
+
+<li>SQL Files</li>
+
+<li>Python Files</li>
+
+</ul>
+
+</section>
+
+<section id="limitations">
+
+<h2>Current Limitations</h2>
+
+<ul>
+
+<li>Repository origin cannot be changed after creation.</li>
+
+<li>Repository is read-only inside Snowflake.</li>
+
+<li>FETCH requires WRITE privilege.</li>
+
+<li>Changes made in GitHub require manual synchronization.</li>
+
+<li>Some UI features are still in Public Preview.</li>
+
+<li>Object ownership is controlled through Snowflake RBAC.</li>
+
+</ul>
+
+</section>
+
+<section>
+
+<h2>Best Practices</h2>
+
+<ul>
+
+<li>Use AccountAdmin to create integration objects.</li>
+
+<li>Store SQL scripts in version control.</li>
+
+<li>Separate development using feature branches.</li>
+
+<li>Synchronize repositories before deployments.</li>
+
+<li>Grant least-privilege access.</li>
+
+<li>Use GitHub with Snowpark for reusable Python code.</li>
+
+<li>Implement CI/CD for automated database deployments.</li>
+
+</ul>
+
+</section>
+
+<section>
+
+<h2>Key Takeaways</h2>
+
+<ul>
+
+<li>GitHub integrates natively with Snowflake.</li>
+
+<li>Supports both Public and Private repositories.</li>
+
+<li>Uses Secret, API Integration, and Git Repository objects.</li>
+
+<li>Enables version-controlled SQL deployments.</li>
+
+<li>Supports branch, tag, and commit browsing.</li>
+
+<li>Execute SQL files directly from GitHub.</li>
+
+<li>Import Python modules into Snowpark stored procedures.</li>
+
+<li>Repository synchronization keeps Snowflake up-to-date.</li>
+
+<li>Designed for collaborative Data Engineering and CI/CD workflows.</li>
+
+</ul>
+
+</section>
+
+</div>
+
+<footer>
+
+<h3>Snowflake GitHub Integration Documentation</h3>
+
+<p>
+Version Control • CI/CD • Snowpark • GitHub • SQL Automation
+</p>
+
+</footer>
+
+</body>
+</html>
